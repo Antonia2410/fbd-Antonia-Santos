@@ -136,3 +136,20 @@ VALUES (1, 'Ana García', 35, 'Femenino', '2023-01-10', 'Calle A, #123'),
        (2, 'Pedro Martínez', 8, 'Masculino', '2023-01-15', 'Calle B, #456'),
        (3, 'Luisa Fernández', 50, 'Femenino', '2023-01-20', 'Av. Corazón, #789');
        
+SELECT * FROM hospital.Hospital;
+SELECT * FROM hospital.sala;
+SELECT * FROM hospital.laboratorio;
+SELECT * FROM hospital.analisis;
+SELECT * FROM hospital.medico;
+SELECT * FROM hospital.paciente;
+
+SELECT Codigo_Hospital, Telefono FROM hospital.Hospital;
+SELECT Codigo_Sala, Cantidad_de_Camas FROM hospital.Sala;
+SELECT ID_Laboratorio, Telefono FROM hospital.laboratorio;
+SELECT ID_Analisis, Complicaciones, No_de_Paciente FROM hospital.analisis;
+SELECT ID_Medico, Cargo, Codigo_Hospital FROM hospital.medico;
+SELECT No_de_Paciente, Nombre, Edad, Direccion FROM hospital.paciente;
+
+SELECT hospital.Hospital.Codigo_Hospital, hospital.Medico.ID_Medico
+FROM hospital.Hospital
+INNER JOIN  hospital.Medico ON hospital.Hospital.Codigo_Hospital= hospital.Medico.Codigo_Hospital;
