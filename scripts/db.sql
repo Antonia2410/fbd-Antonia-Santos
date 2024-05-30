@@ -35,33 +35,51 @@ CREATE TABLE hospital.Laboratorio (
     FOREIGN KEY (Codigo_Hospital) REFERENCES hospital.Hospital(Codigo_Hospital)
 );
 
-CREATE TABLE  hospital.Paciente (
-    No_de_Paciente INT,
-    Nombre VARCHAR(20),
-    Edad INT,
-    Genero VARCHAR(10),
-    Fecha_de_Ingreso DATE,
-    Direccion VARCHAR(45),
-    Codigo_Hospital CHAR(50),
-    PRIMARY KEY (No_de_Paciente),
-    FOREIGN KEY (Codigo_Hospital) REFERENCES hospital.Hospital(Codigo_Hospital)
+CREATE TABLE hospital.Paciente (
+    No_de_Paciente INT PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Edad INT NOT NULL,
+    Genero VARCHAR(10) NOT NULL,
+    Direccion VARCHAR(100) NOT NULL
 );
+
+CREATE TABLE hospital.Estancia (
+    No_de_Paciente INT,
+    Fecha_Inicio DATE,
+    Fecha_Fin DATE,
+    FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente)
+);
+
 -- alter table hospital.paciente drop column No_de_Paciente;
 alter table hospital.paciente add primary key (No_de_Paciente);
 
-CREATE TABLE hospital.Analisis (
+-- Tabla Informacion_Analisis
+CREATE TABLE hospital.Informacion_Analisis (
     ID_Analisis VARCHAR(20) PRIMARY KEY,
-    Complicaciones VARCHAR(200),
-    Tipo VARCHAR(100),
-    ID_Laboratorio CHAR(50) ,
+    Complicaciones VARCHAR(200) NOT NULL,
+    Tipo VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE hospital.Analisis_Paciente (
+    ID_Analisis INT,
+    No_de_Paciente INT,
+    Fecha_Analisis DATE,
+    FOREIGN KEY (ID_Analisis) REFERENCES hospital.Analisis(ID_Analisis),
+    FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente)
+);
+
+-- Tabla Analisis_Relacion
+CREATE TABLE hospital.Analisis_Relacion (
+    ID_Analisis VARCHAR(20),
     ID_Medico INT,
     No_de_Paciente INT,
     Codigo_Hospital CHAR(50),
-    FOREIGN KEY (ID_Laboratorio) REFERENCES hospital.Laboratorio(ID_Laboratorio),
+    FOREIGN KEY (ID_Analisis) REFERENCES hospital.Informacion_Analisis(ID_Analisis),
     FOREIGN KEY (ID_Medico) REFERENCES hospital.Medico(ID_Medico),
     FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente),
     FOREIGN KEY (Codigo_Hospital) REFERENCES hospital.Hospital(Codigo_Hospital)
 );
+
 
 -- alter table hospital.Analisis drop column No_de_Paciente;
 
@@ -204,7 +222,7 @@ WHERE e.Cargo = 'Cirujano';
 SELECT e.Nombre AS Hospital, d.Nombre AS Sala
 FROM hospital.Hospital e
 JOIN hospital.Sala d ON e.Codigo_Hospital = d.Codigo_Hospital
-WHERE e.Cantidad_de_Camas > 20;
+WHERE e.Cantidad_de_Camas > 100;
 SELECT p.Nombre AS Paciente, a.Complicaciones
 FROM hospital.Paciente p
 JOIN hospital.Analisis a ON p.No_de_Paciente = a.No_de_Paciente
@@ -246,9 +264,9 @@ FROM Laboratorio
 WHERE direccion LIKE '%Calle%';
 
 SELECT Nombre
-FROM hospital.Medico 
+FROM hospital.Medico e
 WHERE NOT EXISTS (
-    SELECT 1 FROM hospital.Analisis WHERE ID_Medico = ID_Medico
+    SELECT 1 FROM hospital.Analisis WHERE ID_Medico = e.ID_Medico
 );
 SELECT Nombre
 FROM hospital.Hospital e
@@ -259,4 +277,58 @@ WHERE EXISTS (
 SELECT Nombre, Edad
 FROM hospital.Paciente
 ORDER BY Edad DESC
+OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY;
+
+
+-- Consulta de pacientes ingresados en el hospital en un rango de fechas.
+SELECT p.Nombre AS Paciente, e.Fecha_Inicio, e.Fecha_Fin
+FROM hospital.Paciente p
+JOIN hospital.Estancia e ON p.No_de_Paciente = e.No_de_Paciente
+WHERE e.Fecha_Inicio BETWEEN '2023-01-01' AND '2023-12-31';
+
+-- Consulta de análisis realizados a pacientes en un rango de fechas.
+SELECT p.Nombre AS Paciente, a.Complicaciones, ap.Fecha_Analisis
+FROM hospital.Paciente p
+JOIN hospital.Analisis_Paciente ap ON p.No_de_Paciente = ap.No_de_Paciente
+JOIN hospital.Analisis a ON ap.ID_Analisis = a.ID_Analisis
+WHERE ap.Fecha_Analisis BETWEEN '2023-01-01' AND '2023-12-31';
+
+-- Consulta de pacientes cuya edad está por encima del promedio por género.
+SELECT p.Nombre AS Paciente, p.Edad
+FROM hospital.Paciente p
+WHERE p.Edad > (
+    SELECT AVG(Edad) FROM hospital.Paciente WHERE Genero = p.Genero
+);
+
+-- Consulta de médicos con la misma especialidad que un médico específico.
+SELECT m.Nombre AS Medico, m.Especialidad
+FROM hospital.Medico m
+WHERE m.Especialidad = (
+    SELECT Especialidad FROM hospital.Medico WHERE Nombre = 'Dr. Juan Pérez'
+);
+
+-- Consulta de análisis realizados por laboratorios en una calle específica.
+SELECT a.ID_Analisis, l.ID_Laboratorio
+FROM hospital.Analisis a
+JOIN hospital.Laboratorio l ON a.ID_Analisis = l.ID_Laboratorio
+WHERE l.Direccion LIKE '%Calle%';
+
+-- Consulta de hospitales sin análisis asociados.
+SELECT h.Nombre
+FROM hospital.Hospital h
+WHERE NOT EXISTS (
+    SELECT 1 FROM hospital.Analisis_Paciente ap WHERE ap.No_de_Paciente = h.Codigo_Hospital
+);
+
+-- Consulta de hospitales con salas asociadas.
+SELECT h.Nombre
+FROM hospital.Hospital h
+WHERE EXISTS (
+    SELECT 1 FROM hospital.Estancia e WHERE e.No_de_Paciente = h.Codigo_Hospital
+);
+
+-- Consulta paginada de pacientes ordenados por edad descendente.
+SELECT p.Nombre, p.Edad
+FROM hospital.Paciente p
+ORDER BY p.Edad DESC
 OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY;
