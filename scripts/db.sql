@@ -35,13 +35,17 @@ CREATE TABLE hospital.Laboratorio (
     FOREIGN KEY (Codigo_Hospital) REFERENCES hospital.Hospital(Codigo_Hospital)
 );
 
-CREATE TABLE hospital.Paciente (
+CREATE TABLE Paciente (
     No_de_Paciente INT PRIMARY KEY,
-    Nombre VARCHAR(100) NOT NULL,
-    Edad INT NOT NULL,
-    Genero VARCHAR(10) NOT NULL,
-    Direccion VARCHAR(100) NOT NULL
+    Nombre VARCHAR(20),
+    Edad INT,
+    Genero VARCHAR(10),
+    Fecha_de_Ingreso DATE,
+    FOREIGN KEY (Codigo_Hospital) REFERENCES Hospital(Codigo_Hospital)
 );
+
+-- alter table hospital.paciente drop column No_de_Paciente;
+alter table hospital.paciente add primary key (No_de_Paciente);
 
 CREATE TABLE hospital.Estancia (
     No_de_Paciente INT,
@@ -50,37 +54,56 @@ CREATE TABLE hospital.Estancia (
     FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente)
 );
 
--- alter table hospital.paciente drop column No_de_Paciente;
-alter table hospital.paciente add primary key (No_de_Paciente);
-
--- Tabla Informacion_Analisis
-CREATE TABLE hospital.Informacion_Analisis (
+CREATE TABLE Direccion_Paciente (
+    No_de_Paciente INT PRIMARY KEY,
+    Direccion VARCHAR(45),
+    FOREIGN KEY (No_de_Paciente) REFERENCES Paciente(No_de_Paciente)
+);
+INSERT INTO Direccion_Paciente (No_de_Paciente, Direccion)
+VALUES 
+    (1, 'Calle A, #123'),
+    (2, 'Calle B, #456'),
+    (3, 'Av. Corazón, #789');
+    
+CREATE TABLE Informacion_Analisis (
     ID_Analisis VARCHAR(20) PRIMARY KEY,
-    Complicaciones VARCHAR(200) NOT NULL,
-    Tipo VARCHAR(100) NOT NULL
+    Complicaciones VARCHAR(200),
+    Tipo VARCHAR(100)
 );
+INSERT INTO Informacion_Analisis (ID_Analisis, Complicaciones, Tipo)
+VALUES 
+    ('ANAL001', 'Sin complicaciones', 'Análisis de sangre'),
+    ('ANAL002', 'Sin complicaciones', 'Análisis de orina'),
+    ('ANAL003', 'Sin complicaciones', 'Electrocardiograma');
 
-CREATE TABLE hospital.Analisis_Paciente (
-    ID_Analisis INT,
-    No_de_Paciente INT,
-    Fecha_Analisis DATE,
-    FOREIGN KEY (ID_Analisis) REFERENCES hospital.Analisis(ID_Analisis),
-    FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente)
-);
-
--- Tabla Analisis_Relacion
-CREATE TABLE hospital.Analisis_Relacion (
+CREATE TABLE Analisis_Medico (
     ID_Analisis VARCHAR(20),
     ID_Medico INT,
-    No_de_Paciente INT,
-    Codigo_Hospital CHAR(50),
-    FOREIGN KEY (ID_Analisis) REFERENCES hospital.Informacion_Analisis(ID_Analisis),
-    FOREIGN KEY (ID_Medico) REFERENCES hospital.Medico(ID_Medico),
-    FOREIGN KEY (No_de_Paciente) REFERENCES hospital.Paciente(No_de_Paciente),
-    FOREIGN KEY (Codigo_Hospital) REFERENCES hospital.Hospital(Codigo_Hospital)
+    PRIMARY KEY (ID_Analisis, ID_Medico),
+    FOREIGN KEY (ID_Analisis) REFERENCES Informacion_Analisis(ID_Analisis),
+    FOREIGN KEY (ID_Medico) REFERENCES Medico(ID_Medico)
 );
+INSERT INTO Analisis_Medico (ID_Analisis, ID_Medico)
+VALUES 
+    ('ANAL001', 101),
+    ('ANAL002', 102),
+    ('ANAL003', 103);
 
-
+CREATE TABLE Analisis_Paciente (
+    ID_Analisis VARCHAR(20),
+    No_de_Paciente INT,
+    PRIMARY KEY (ID_Analisis, No_de_Paciente),
+    FOREIGN KEY (ID_Analisis) REFERENCES Informacion_Analisis(ID_Analisis),
+    FOREIGN KEY (No_de_Paciente) REFERENCES Paciente(No_de_Paciente)
+);
+INSERT INTO Analisis_Paciente (ID_Analisis, No_de_Paciente)
+VALUES 
+    ('ANAL001', 1),
+    ('ANAL002', 2),
+    ('ANAL003', 3),
+    ('ANAL004', 4),
+    ('ANAL005', 5);
+    
 -- alter table hospital.Analisis drop column No_de_Paciente;
 
 -- ALTER TABLE statements (execute after creating all tables)
